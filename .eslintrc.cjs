@@ -14,7 +14,7 @@ module.exports = {
     {
       files: ['*.ts', '*.vue'],
       parserOptions: {
-        project: ['./tsconfig.json'],
+        project: ['./tsconfig.json', './tests/tsconfig.json'],
       },
       rules: {
         '@typescript-eslint/no-non-null-assertion': 'off',

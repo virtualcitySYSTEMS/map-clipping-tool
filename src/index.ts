@@ -1,17 +1,69 @@
-import { VcsPlugin, VcsUiApp, PluginConfigEditor } from '@vcmap/ui';
+import type {
+  VcsPlugin,
+  VcsUiApp,
+  PluginConfigEditor,
+  EditorCollectionComponentClass,
+} from '@vcmap/ui';
+import type { ShallowRef } from 'vue';
+import { shallowRef } from 'vue';
+import type {
+  Category,
+  Ctor,
+  EditFeaturesSession,
+  EditGeometrySession,
+  VectorLayer,
+} from '@vcmap/core';
+import { moduleIdSymbol } from '@vcmap/core';
 import { name, version, mapVersion } from '../package.json';
+import addClippingToolButtons from './toolboxHelper.js';
+import ClippingToolCategory, {
+  createCategory,
+} from './clippingToolCategory.js';
+import type { ClippingType, ClippingToolObject } from './setup.js';
+import {
+  createActiveClippingObjectRef,
+  setupClippingFeatureLayer,
+} from './setup.js';
+import type { CreateClippingFeatureSession } from './createClippingSession.js';
+import { startCreateClippingSession } from './createClippingSession.js';
+import addContextMenu from './contextMenu.js';
 
 type PluginConfig = Record<never, never>;
 type PluginState = Record<never, never>;
 
-type MyPlugin = VcsPlugin<PluginConfig, PluginState>;
+export type ClippingToolPlugin = VcsPlugin<PluginConfig, PluginState> & {
+  readonly clippingFeatureLayer: VectorLayer;
+  readonly collectionComponent: EditorCollectionComponentClass<ClippingToolObject>;
+  readonly activeClippingToolObject: ShallowRef<ClippingToolObject | undefined>;
+  readonly editorSession: ShallowRef<
+    | CreateClippingFeatureSession
+    | EditGeometrySession
+    | EditFeaturesSession
+    | undefined
+  >;
+  startCreateClippingSession(
+    this: ClippingToolPlugin,
+    type: ClippingType,
+  ): Promise<void>;
+};
 
-export default function plugin(
-  config: PluginConfig,
-  baseUrl: string,
-): MyPlugin {
-  // eslint-disable-next-line no-console
-  console.log(config, baseUrl);
+export default function plugin(): ClippingToolPlugin {
+  let collectionComponent:
+    | EditorCollectionComponentClass<ClippingToolObject>
+    | undefined;
+  let app: VcsUiApp | undefined;
+  let clippingFeatureLayer: VectorLayer | undefined;
+  let activeClippingToolObject:
+    | ShallowRef<ClippingToolObject | undefined>
+    | undefined;
+  const editorSession: ShallowRef<
+    | CreateClippingFeatureSession
+    | EditGeometrySession
+    | EditFeaturesSession
+    | undefined
+  > = shallowRef(undefined);
+  let destroy = (): void => {};
+
   return {
     get name(): string {
       return name;
@@ -22,57 +74,133 @@ export default function plugin(
     get mapVersion(): string {
       return mapVersion;
     },
-    initialize(vcsUiApp: VcsUiApp, state?: PluginState): Promise<void> {
-      // eslint-disable-next-line no-console
-      console.log(
-        'Called before loading the rest of the current context. Passed in the containing Vcs UI App ',
-        vcsUiApp,
-        state,
+    get activeClippingToolObject(): ShallowRef<ClippingToolObject | undefined> {
+      if (!activeClippingToolObject) {
+        throw new Error('Clipping tool not yet initialized');
+      }
+      return activeClippingToolObject;
+    },
+    get clippingFeatureLayer(): VectorLayer {
+      if (!clippingFeatureLayer) {
+        throw new Error('Clipping tool not yet initialized');
+      }
+      return clippingFeatureLayer;
+    },
+    get editorSession(): ShallowRef<
+      | CreateClippingFeatureSession
+      | EditGeometrySession
+      | EditFeaturesSession
+      | undefined
+    > {
+      return editorSession;
+    },
+    get collectionComponent(): EditorCollectionComponentClass<ClippingToolObject> {
+      if (!collectionComponent) {
+        throw new Error('Clipping tool not yet initialized');
+      }
+      return collectionComponent;
+    },
+    async initialize(vcsUiApp: VcsUiApp): Promise<void> {
+      app = vcsUiApp;
+      app.categoryClassRegistry.registerClass(
+        this[moduleIdSymbol],
+        ClippingToolCategory.className,
+        ClippingToolCategory as unknown as Ctor<typeof Category>,
       );
+      const clippingToolCategoryHelper = await createCategory(vcsUiApp, this);
+      ({ collectionComponent } = clippingToolCategoryHelper);
+      const layer = await setupClippingFeatureLayer(
+        vcsUiApp,
+        clippingToolCategoryHelper.collectionComponent.collection,
+      );
+      clippingFeatureLayer = layer.layer;
+      const activeRef = createActiveClippingObjectRef(
+        vcsUiApp,
+        collectionComponent,
+        clippingFeatureLayer,
+      );
+      ({ activeClippingToolObject } = activeRef);
+
+      const destroyClippingToolBox = addClippingToolButtons(
+        vcsUiApp,
+        name,
+        `${clippingToolCategoryHelper.collectionComponent.id}-editor`,
+        this,
+      );
+      const destroyContextMenu = addContextMenu(app, this);
+      destroy = (): void => {
+        activeRef.destroy();
+        clippingToolCategoryHelper.destroy();
+        destroyClippingToolBox();
+        destroyContextMenu();
+        layer.destroy();
+      };
       return Promise.resolve();
     },
-    onVcsAppMounted(vcsUiApp: VcsUiApp): void {
-      // eslint-disable-next-line no-console
-      console.log(
-        'Called when the root UI component is mounted and managers are ready to accept components',
-        vcsUiApp,
+    async startCreateClippingSession(type: ClippingType): Promise<void> {
+      editorSession.value = await startCreateClippingSession(
+        app!,
+        type,
+        this,
+        `${this.collectionComponent.id}-editor`,
       );
     },
-    /**
-     * should return all default values of the configuration
-     */
     getDefaultOptions(): PluginConfig {
       return {};
     },
-    /**
-     * should return the plugin's serialization excluding all default values
-     */
     toJSON(): PluginConfig {
-      // eslint-disable-next-line no-console
-      console.log('Called when serializing this plugin instance');
       return {};
     },
-    /**
-     * should return the plugins state
-     * @param {boolean} forUrl
-     * @returns {PluginState}
-     */
-    getState(forUrl?: boolean): PluginState {
-      // eslint-disable-next-line no-console
-      console.log('Called when collecting state, e.g. for create link', forUrl);
-      return {
-        prop: '*',
-      };
-    },
-    /**
-     * components for configuring the plugin and/ or custom items defined by the plugin
-     */
     getConfigEditors(): PluginConfigEditor[] {
       return [];
     },
-    destroy(): void {
-      // eslint-disable-next-line no-console
-      console.log('hook to cleanup');
+    destroy,
+    i18n: {
+      en: {
+        clippingTool: {
+          clippingPlane: 'Clipping Plane',
+          temporary: 'Temporary',
+          horizontal: 'Horizontal',
+          vertical: 'Vertical',
+          isInfinite: 'Is infinite',
+          cutsGlobe: 'Cuts globe',
+          isInverted: 'Is inverted',
+          showFeature: 'Show feature',
+          new: 'New',
+          addToMyWorkspace: 'Add to MyWorkspace',
+          create: 'Create',
+          createVertical: 'Create vertical clipping plane',
+          createHorizontal: 'Create horizontal clipping plane',
+          layerNames: 'Layer',
+          createDescription: 'Set clipping skeleton by click within the map.',
+          zoomTo: 'Zoom to item',
+          export: 'Export',
+          delete: 'Delete',
+        },
+      },
+      de: {
+        clippingTool: {
+          clippingPlane: 'Schnittebene',
+          temporary: 'Temporäre',
+          horizontal: 'Horizontale',
+          vertical: 'Vertikale',
+          isInfinite: 'Unendlich',
+          cutsGlobe: 'Schneidet Globus',
+          isInverted: 'Invertieren',
+          showFeature: 'Feature anzeigen',
+          new: 'Neu',
+          addToMyWorkspace: 'Zu Mein Arbeitsbereich hinzufügen',
+          create: 'Erzeuge',
+          createVertical: 'Erzeuge vertikale Schnittebene',
+          createHorizontal: 'Erzeuge horizontale Schnittebene',
+          layerNames: 'Layer',
+          createDescription:
+            'Setze die Schnittebene mit einem Klick in der Karte.',
+          zoomTo: 'Auf Element zoomen',
+          export: 'Exportieren',
+          delete: 'Löschen',
+        },
+      },
     },
   };
 }
