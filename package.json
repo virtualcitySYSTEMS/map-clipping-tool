@@ -46,15 +46,11 @@
   "prettier": "@vcsuite/eslint-config/prettier.js",
   "peerDependencies": {
     "@vcmap-cesium/engine": "^4.0.3",
-    "@vcmap/core": "git+ssh://git@gitlab.virtualcitysystems.de/vcsuite/npm/vcmap/core.git#main",
-    "@vcmap/ui": "git+ssh://git@gitlab.virtualcitysystems.de/vcsuite/npm/vcmap/ui.git#main",
+    "@vcmap/core": "^5.2.0",
+    "@vcmap/ui": "^5.2.0",
     "ol": "^7.5.2",
     "vue": "~2.7.3",
     "vuetify": "~2.6.7"
-  },
-  "overrides": {
-    "@vcmap/core": "git+ssh://git@gitlab.virtualcitysystems.de/vcsuite/npm/vcmap/core.git#main",
-    "@vcmap/ui": "git+ssh://git@gitlab.virtualcitysystems.de/vcsuite/npm/vcmap/ui.git#main"
   },
   "devDependencies": {
     "@vcmap/plugin-cli": "^3.0.1",
@@ -71,5 +67,5 @@
     "@vcsuite/logger": "^1.0.1",
     "@vcsuite/parsers": "^1.0.3"
   },
-  "mapVersion": "^5.1.4"
+  "mapVersion": "^5.2"
 }

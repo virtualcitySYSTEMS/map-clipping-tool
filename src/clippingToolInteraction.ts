@@ -33,11 +33,14 @@ export default class ClippingToolInteraction extends AbstractInteraction {
     if (event.position) {
       const camera = (event.map as CesiumMap).getScene()?.camera;
       const coordinate = Projection.mercatorToWgs84(event.position);
+      const rotate = this._isVertical ? Math.PI / 2 : 0;
       if (camera) {
         const feature = createClippingFeature(
           coordinate,
           camera,
           this._isVertical,
+          undefined,
+          rotate,
         );
         this._finished.raiseEvent(feature);
       } else {

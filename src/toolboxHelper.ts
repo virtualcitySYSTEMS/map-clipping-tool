@@ -47,12 +47,10 @@ function createClippingToolBox(
         }
       },
       selected(newIndex) {
-        if (newIndex !== this.currentIndex) {
-          this.currentIndex = newIndex;
-          const toolName = this.tools[this.currentIndex].name;
-          // eslint-disable-next-line no-void
-          void plugin.startCreateClippingSession(toolName);
-        }
+        this.currentIndex = newIndex;
+        const toolName = this.tools[this.currentIndex].name;
+        // eslint-disable-next-line no-void
+        void plugin.startCreateClippingSession(toolName);
       },
       tools: [
         {

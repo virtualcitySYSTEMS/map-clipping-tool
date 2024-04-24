@@ -7,7 +7,7 @@
       v-else
       heading="clippingTool.clippingPlane"
       :header-actions="headerActions"
-      :action-button-list-overflow-count="4"
+      :action-button-list-overflow-count="5"
     >
       <v-container class="px-1 py-0">
         <template v-if="currentTransformationMode">
@@ -23,12 +23,12 @@
           <v-divider />
         </template>
         <v-row no-gutters>
-          <v-col>
+          <v-col cols="6">
             <VcsLabel html-for="clipping-tool-layernames">{{
               $t('clippingTool.layerNames')
             }}</VcsLabel>
           </v-col>
-          <v-col>
+          <v-col cols="6">
             <VcsSelect
               id="clipping-tool-layernames"
               :items="[...availableLayerNames]"
@@ -38,12 +38,12 @@
           </v-col>
         </v-row>
         <v-row no-gutters>
-          <v-col>
+          <v-col cols="6">
             <VcsLabel html-for="clipping-tool-extrusion">{{
               $t('components.vectorProperties.extrudedHeight')
             }}</VcsLabel>
           </v-col>
-          <v-col>
+          <v-col cols="6">
             <VcsTextField
               id="clipping-tool-extrusion"
               type="number"
@@ -73,14 +73,6 @@
           <VcsCheckbox
             :label="`clippingTool.isInverted`"
             v-model="isInverted"
-            :true-value="true"
-            :false-value="false"
-          />
-        </v-row>
-        <v-row no-gutters>
-          <VcsCheckbox
-            :label="`clippingTool.showFeature`"
-            v-model="showFeature"
             :true-value="true"
             :false-value="false"
           />
@@ -124,8 +116,9 @@
     watch,
     provide,
   } from 'vue';
-  import type { EditFeaturesSession, TransformationMode } from '@vcmap/core';
   import {
+    EditFeaturesSession,
+    TransformationMode,
     CesiumMap,
     CesiumTilesetLayer,
     SessionType,
@@ -139,7 +132,11 @@
   } from './setup.js';
   import { name } from '../package.json';
   import type { ClippingToolPlugin } from './index';
-  import { createEditAction, createTransformationActions } from './actions.js';
+  import {
+    createEditAction,
+    createShowHideAction,
+    createTransformationActions,
+  } from './actions.js';
   import { createTitleForClippingToolObject } from './clippingToolCategory.js';
   import { ClippingToolIcons } from './windowHelper.js';
 
@@ -237,7 +234,6 @@
       const isInfinite = ref(true);
       const cutsGlobe = ref(true);
       const isInverted = ref(true);
-      const showFeature = ref(true);
       const layerNames = ref<string[]>([]);
       const extrudedHeight = ref<number | undefined>();
       const headerActions = ref<VcsAction[]>([]);
@@ -287,7 +283,6 @@
             isInfinite.value = featureProps.isInfinite;
             cutsGlobe.value = featureProps.cutsGlobe;
             isInverted.value = featureProps.isInverted;
-            showFeature.value = featureProps.showFeature;
             layerNames.value = featureProps.layerNames;
             extrudedHeight.value = featureProps.olcs_extrudedHeight;
 
@@ -308,10 +303,6 @@
                   isInverted.value = plugin.activeClippingToolObject.value!.get(
                     key,
                   ) as boolean;
-                }
-                if (key === 'showFeature') {
-                  showFeature.value =
-                    plugin.activeClippingToolObject.value!.get(key) as boolean;
                 }
                 if (key === 'layerNames') {
                   layerNames.value = plugin.activeClippingToolObject.value!.get(
@@ -351,32 +342,51 @@
                 'clippingType',
               ) as ClippingType;
 
-            const { action: editAction, destroy: destroyEditAction } =
-              createEditAction(
-                app,
-                plugin.collectionComponent,
-                plugin.clippingFeatureLayer,
-                plugin.activeClippingToolObject.value,
-                plugin.editorSession,
-              );
+            const destroyActions: Array<() => void> = [];
+
+            const { action: showHideAction, destroy: destroyShowHideAction } =
+              createShowHideAction(plugin.activeClippingToolObject.value);
+            headerActions.value.push(showHideAction);
+
+            const transformationModes = [
+              TransformationMode.TRANSLATE,
+              TransformationMode.ROTATE,
+            ];
+
+            if (currentClippingObjectType.value === 'vertical') {
+              const { action: editAction, destroy: destroyEditAction } =
+                createEditAction(
+                  app,
+                  plugin.collectionComponent,
+                  plugin.clippingFeatureLayer,
+                  plugin.activeClippingToolObject.value,
+                  plugin.editorSession,
+                );
+              headerActions.value.push(editAction);
+              destroyActions.push(destroyEditAction);
+            } else {
+              transformationModes.push(TransformationMode.SCALE);
+            }
 
             const {
               actions: transformationActions,
-              destroy: destoryTransformationActions,
+              destroy: destroyTransformationActions,
             } = createTransformationActions(
               app,
               plugin.collectionComponent,
               plugin.clippingFeatureLayer,
               plugin.activeClippingToolObject.value,
               plugin.editorSession,
+              transformationModes,
             );
+            headerActions.value.push(...transformationActions);
+            destroyActions.push(destroyTransformationActions);
+
+            destroyActions.push(destroyShowHideAction);
 
             destroyHeaderActions = (): void => {
-              destroyEditAction();
-              destoryTransformationActions();
+              destroyActions.forEach((callback) => callback());
             };
-
-            headerActions.value = [editAction, ...transformationActions];
           } else {
             headerActions.value = [];
             currentClippingObjectType.value = undefined;
@@ -464,11 +474,6 @@
         isInverted: createPropertyComputed(
           isInverted,
           'isInverted',
-          plugin.activeClippingToolObject,
-        ),
-        showFeature: createPropertyComputed(
-          showFeature,
-          'showFeature',
           plugin.activeClippingToolObject,
         ),
         layerNames: createPropertyComputed(

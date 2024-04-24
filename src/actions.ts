@@ -11,14 +11,19 @@ import type {
   VectorLayer,
 } from '@vcmap/core';
 import {
+  EventType,
   SessionType,
   startEditFeaturesSession,
   startEditGeometrySession,
   TransformationMode,
 } from '@vcmap/core';
+import { unByKey } from 'ol/Observable.js';
+import { EventsKey } from 'ol/events.js';
+import { Coordinate } from 'ol/coordinate.js';
 import type { ClippingToolObject } from './setup.js';
 import type { CreateClippingFeatureSession } from './createClippingSession.js';
 import { openWindowForClippingToolObject } from './windowHelper.js';
+import EndEditorInteraction from './endEditorInteraction.js';
 
 export function createTransformationActions(
   app: VcsUiApp,
@@ -31,14 +36,11 @@ export function createTransformationActions(
     | EditFeaturesSession
     | undefined
   >,
+  modes: TransformationMode[],
 ): { actions: VcsAction[]; destroy: () => void } {
   const actions = new Map<TransformationMode, VcsAction>();
 
-  [
-    TransformationMode.TRANSLATE,
-    TransformationMode.ROTATE,
-    TransformationMode.SCALE,
-  ].forEach((mode) => {
+  modes.forEach((mode) => {
     actions.set(mode, {
       name: `components.editor.${mode}`,
       title: `components.editor.${mode}`,
@@ -59,12 +61,22 @@ export function createTransformationActions(
             undefined,
             mode,
           );
-          editFeaturesSession.stopped.addEventListener(() => {
-            currentEditorSession.value = undefined;
-          });
           editFeaturesSession.setFeatures([feature]);
 
           currentEditorSession.value = editFeaturesSession;
+
+          const endEditorInteraction = new EndEditorInteraction(
+            currentEditorSession,
+          );
+          const destroyEndEditorInteraction =
+            app.maps.eventHandler.addPersistentInteraction(
+              endEditorInteraction,
+            );
+          editFeaturesSession.stopped.addEventListener(() => {
+            destroyEndEditorInteraction();
+            endEditorInteraction.destroy();
+            currentEditorSession.value = undefined;
+          });
         }
       },
     });
@@ -127,11 +139,50 @@ export function createEditAction(
             denyRemoval: true,
           },
         );
-        currentEditorSession.value.stopped.addEventListener(() => {
-          currentEditorSession.value = undefined;
-        });
+
         currentEditorSession.value.setFeature(feature);
         openWindowForClippingToolObject(app, collectionComponent, feature);
+
+        const endEditorInteraction = new EndEditorInteraction(
+          currentEditorSession,
+        );
+        const destroyEndEditorInteraction =
+          app.maps.eventHandler.addPersistentInteraction(endEditorInteraction);
+
+        const geometry = feature.getGeometry();
+        const cachedFeaturePickPosition =
+          app.maps.eventHandler.featureInteraction.pickPosition;
+        app.maps.eventHandler.featureInteraction.pickPosition = EventType.NONE;
+
+        let geometryListenerKey: EventsKey;
+        if (geometry) {
+          const zValue = geometry?.getFlatCoordinates()[2];
+          const ensureSameHeightHandler = (): void => {
+            unByKey(geometryListenerKey);
+            const coords = geometry.getCoordinates();
+            if (geometry.getType() === 'LineString') {
+              // makes sure vertices keep same z value when they are edited
+              coords[0][2] = zValue;
+              coords[1][2] = zValue;
+            }
+            geometry.setCoordinates(coords as Coordinate[] & Coordinate[][]);
+            geometryListenerKey = geometry.on(
+              'change',
+              ensureSameHeightHandler,
+            );
+          };
+
+          geometryListenerKey = geometry.on('change', ensureSameHeightHandler);
+        }
+
+        currentEditorSession.value.stopped.addEventListener(() => {
+          currentEditorSession.value = undefined;
+          destroyEndEditorInteraction();
+          endEditorInteraction.destroy();
+          unByKey(geometryListenerKey);
+          app.maps.eventHandler.featureInteraction.pickPosition =
+            cachedFeaturePickPosition;
+        });
       }
     },
   };
@@ -148,6 +199,35 @@ export function createEditAction(
     action,
     destroy(): void {
       sessionWatcher();
+    },
+  };
+}
+
+export function createShowHideAction(feature: ClippingToolObject): {
+  action: VcsAction;
+  destroy: () => void;
+} {
+  const action: VcsAction = {
+    name: 'clippingTool.showFeature',
+    title: 'clippingTool.showFeature',
+    icon: '$vcsEye',
+    active: feature.getProperty('showFeature'),
+    callback: () => {
+      const showFeature = !feature.getProperty('showFeature');
+      feature.setProperties({ showFeature });
+    },
+  };
+
+  const listener = feature.on('propertychange', ({ key }) => {
+    if (key === 'showFeature') {
+      action.active = feature.get(key);
+    }
+  });
+
+  return {
+    action,
+    destroy(): void {
+      unByKey(listener);
     },
   };
 }

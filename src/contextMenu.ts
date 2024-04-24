@@ -4,28 +4,35 @@ import {
   CesiumMap,
   createClippingFeature,
   Projection,
+  TransformationMode,
   writeGeoJSON,
 } from '@vcmap/core';
 import { nextTick } from 'vue';
 import type { ClippingToolPlugin } from './index.js';
 import { name } from '../package.json';
 import { createEditAction, createTransformationActions } from './actions.js';
-import type { ClippingToolObject } from './setup.js';
+import type { ClippingToolObject, ClippingType } from './setup.js';
 import { createEditorWindowComponentOptions } from './windowHelper.js';
 
 export default function addContextMenu(
   app: VcsUiApp,
   plugin: ClippingToolPlugin,
 ): () => void {
-  let destroyActions: () => void = () => {};
+  let destroyContextActions: () => void = () => {};
 
   app.contextMenuManager.closed.addEventListener(() => {
-    destroyActions();
-    destroyActions = (): void => {};
+    destroyContextActions();
+    destroyContextActions = (): void => {};
   });
 
   function clippingHandler(event: InteractionEvent): VcsAction[] {
     const contextEntries: VcsAction[] = [];
+    const destroyActions: Array<() => void> = [];
+    const transformationModes = [
+      TransformationMode.TRANSLATE,
+      TransformationMode.ROTATE,
+    ];
+
     const {
       clippingFeatureLayer,
       activeClippingToolObject,
@@ -37,14 +44,25 @@ export default function addContextMenu(
       activeClippingToolObject.value &&
       event.feature === activeClippingToolObject.value
     ) {
-      const { action: editAction, destroy: destroyEditAction } =
-        createEditAction(
-          app,
-          collectionComponent,
-          clippingFeatureLayer,
-          activeClippingToolObject.value,
-          editorSession,
-        );
+      const clippingType = event.feature.getProperty(
+        'clippingType',
+      ) as ClippingType;
+
+      if (clippingType === 'vertical') {
+        const { action: editAction, destroy: destroyEditAction } =
+          createEditAction(
+            app,
+            collectionComponent,
+            clippingFeatureLayer,
+            activeClippingToolObject.value,
+            editorSession,
+          );
+        contextEntries.push(editAction);
+        destroyActions.push(destroyEditAction);
+      } else {
+        transformationModes.push(TransformationMode.SCALE);
+      }
+
       const {
         actions: transformationActions,
         destroy: destroyTransformationActions,
@@ -54,15 +72,15 @@ export default function addContextMenu(
         clippingFeatureLayer,
         activeClippingToolObject.value,
         editorSession,
+        transformationModes,
       );
+      contextEntries.push(...transformationActions);
+      destroyActions.push(destroyTransformationActions);
 
-      destroyActions = (): void => {
-        destroyEditAction();
-        destroyTransformationActions();
+      destroyContextActions = (): void => {
+        destroyActions.forEach((callback) => callback());
       };
 
-      contextEntries.push(editAction);
-      contextEntries.push(...transformationActions);
       contextEntries.push({
         name: 'clippingTool.export',
         title: 'clippingTool.export',
@@ -115,6 +133,7 @@ export default function addContextMenu(
                 const coordinate = Projection.mercatorToWgs84(event.position);
                 if (camera) {
                   plugin.activeClippingToolObject.value = undefined;
+                  app.windowManager.remove(`${collectionComponent.id}-editor`);
                   await nextTick();
 
                   if (
@@ -133,6 +152,8 @@ export default function addContextMenu(
                     coordinate,
                     camera,
                     clippingType === 'vertical',
+                    undefined,
+                    clippingType === 'vertical' ? Math.PI / 2 : 0,
                   ) as ClippingToolObject;
                   plugin.clippingFeatureLayer.addFeatures([feature]);
                   plugin.activeClippingToolObject.value = feature;
@@ -149,7 +170,7 @@ export default function addContextMenu(
   app.contextMenuManager.addEventHandler(clippingHandler, name);
 
   return (): void => {
-    destroyActions();
+    destroyContextActions();
     app.contextMenuManager.removeHandler(clippingHandler);
   };
 }
