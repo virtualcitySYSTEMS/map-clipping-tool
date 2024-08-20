@@ -6,15 +6,7 @@ const configTest = defineConfig({
   ...commonViteConfig,
   resolve: {
     alias: {
-      vue: 'vue/dist/vue.esm.js',
-      tinyqueue: 'tinyqueue/tinyqueue.js',
-    },
-  },
-  css: {
-    preprocessorOptions: {
-      sass: {
-        additionalData: "\n@import '@vcmap/ui/src/styles/variables.scss'\n",
-      },
+      '@vcmap/ui': '@vcmap/ui',
     },
   },
   test: {
@@ -25,8 +17,7 @@ const configTest = defineConfig({
     },
     environment: 'jsdom',
     setupFiles: ['tests/setup.js'],
-    isolate: false,
-    threads: false,
+    pool: 'forks',
   },
 });
 export default configTest;

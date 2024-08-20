@@ -1,6 +1,6 @@
 {
   "name": "@vcmap/clipping-tool",
-  "version": "1.0.1",
+  "version": "2.0.0-rc.0",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
@@ -45,27 +45,27 @@
   ],
   "prettier": "@vcsuite/eslint-config/prettier.js",
   "peerDependencies": {
-    "@vcmap-cesium/engine": "^4.0.3",
-    "@vcmap/core": "^5.2.0",
-    "@vcmap/ui": "^5.2.0",
-    "ol": "^7.5.2",
-    "vue": "~2.7.3",
-    "vuetify": "~2.6.7"
+    "@vcmap-cesium/engine": "^10.0.1",
+    "@vcmap/core": "^6.0.0-rc.3",
+    "@vcmap/ui": "^6.0.0-rc.5",
+    "ol": "^10.0.0",
+    "vue": "~3.4.27",
+    "vuetify": "^3.6.13"
   },
   "devDependencies": {
-    "@vcmap/plugin-cli": "^3.0.1",
-    "@vcsuite/eslint-config": "^3.0.6",
-    "@vitest/coverage-v8": "^1.2.2",
+    "@vcmap/plugin-cli": "^4.0.0-rc.4",
+    "@vcsuite/eslint-config": "^3.0.8",
+    "@vitest/coverage-v8": "^2.0.3",
     "jest-canvas-mock": "^2.5.2",
     "jsdom": "^24.0.0",
     "resize-observer-polyfill": "^1.5.1",
-    "typescript": "^5.3.3",
-    "vitest": "^1.2.2",
-    "vue-tsc": "^1.8.27"
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.3",
+    "vue-tsc": "^2.0.26"
   },
   "dependencies": {
     "@vcsuite/logger": "^1.0.1",
     "@vcsuite/parsers": "^1.0.3"
   },
-  "mapVersion": "^5.2"
+  "mapVersion": "^6.0"
 }

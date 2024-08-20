@@ -1,4 +1,4 @@
-import { watch, type ShallowRef } from 'vue';
+import { reactive, watch, type ShallowRef } from 'vue';
 import type {
   EditorCollectionComponentClass,
   VcsAction,
@@ -41,45 +41,48 @@ export function createTransformationActions(
   const actions = new Map<TransformationMode, VcsAction>();
 
   modes.forEach((mode) => {
-    actions.set(mode, {
-      name: `components.editor.${mode}`,
-      title: `components.editor.${mode}`,
-      icon: EditorTransformationIcons[mode],
-      active: false,
-      callback: (): void => {
-        if (currentEditorSession.value?.type === SessionType.EDIT_FEATURES) {
-          if (currentEditorSession.value.mode === mode) {
-            currentEditorSession.value.stop();
+    actions.set(
+      mode,
+      reactive({
+        name: `components.editor.${mode}`,
+        title: `components.editor.${mode}`,
+        icon: EditorTransformationIcons[mode],
+        active: false,
+        callback: (): void => {
+          if (currentEditorSession.value?.type === SessionType.EDIT_FEATURES) {
+            if (currentEditorSession.value.mode === mode) {
+              currentEditorSession.value.stop();
+            } else {
+              currentEditorSession.value.setMode(mode);
+            }
           } else {
-            currentEditorSession.value.setMode(mode);
-          }
-        } else {
-          openWindowForClippingToolObject(app, collectionComponent, feature);
-          const editFeaturesSession = startEditFeaturesSession(
-            app,
-            layer,
-            undefined,
-            mode,
-          );
-          editFeaturesSession.setFeatures([feature]);
-
-          currentEditorSession.value = editFeaturesSession;
-
-          const endEditorInteraction = new EndEditorInteraction(
-            currentEditorSession,
-          );
-          const destroyEndEditorInteraction =
-            app.maps.eventHandler.addPersistentInteraction(
-              endEditorInteraction,
+            openWindowForClippingToolObject(app, collectionComponent, feature);
+            const editFeaturesSession = startEditFeaturesSession(
+              app,
+              layer,
+              undefined,
+              mode,
             );
-          editFeaturesSession.stopped.addEventListener(() => {
-            destroyEndEditorInteraction();
-            endEditorInteraction.destroy();
-            currentEditorSession.value = undefined;
-          });
-        }
-      },
-    });
+            editFeaturesSession.setFeatures([feature]);
+
+            currentEditorSession.value = editFeaturesSession;
+
+            const endEditorInteraction = new EndEditorInteraction(
+              currentEditorSession,
+            );
+            const destroyEndEditorInteraction =
+              app.maps.eventHandler.addPersistentInteraction(
+                endEditorInteraction,
+              );
+            editFeaturesSession.stopped.addEventListener(() => {
+              destroyEndEditorInteraction();
+              endEditorInteraction.destroy();
+              currentEditorSession.value = undefined;
+            });
+          }
+        },
+      }),
+    );
   });
 
   const sessionWatcher = watch(
@@ -121,7 +124,7 @@ export function createEditAction(
     | undefined
   >,
 ): { action: VcsAction; destroy: () => void } {
-  const action: VcsAction = {
+  const action: VcsAction = reactive({
     name: 'components.editor.edit',
     title: 'components.editor.edit',
     icon: '$vcsEditVertices',
@@ -185,7 +188,7 @@ export function createEditAction(
         });
       }
     },
-  };
+  });
 
   const sessionWatcher = watch(
     currentEditorSession,
@@ -207,7 +210,7 @@ export function createShowHideAction(feature: ClippingToolObject): {
   action: VcsAction;
   destroy: () => void;
 } {
-  const action: VcsAction = {
+  const action: VcsAction = reactive({
     name: 'clippingTool.showFeature',
     title: 'clippingTool.showFeature',
     icon: '$vcsEye',
@@ -216,7 +219,7 @@ export function createShowHideAction(feature: ClippingToolObject): {
       const showFeature = !feature.getProperty('showFeature');
       feature.setProperties({ showFeature });
     },
-  };
+  });
 
   const listener = feature.on('propertychange', ({ key }) => {
     if (key === 'showFeature') {

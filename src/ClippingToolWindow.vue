@@ -1,8 +1,8 @@
 <template>
   <v-sheet>
-    <div v-if="isCreate" class="px-2 py-1">
+    <VcsHelp v-if="isCreate">
       {{ $t('clippingTool.createDescription') }}
-    </div>
+    </VcsHelp>
     <VcsFormSection
       v-else
       heading="clippingTool.clippingPlane"
@@ -95,7 +95,7 @@
 </template>
 
 <script lang="ts">
-  import { VRow, VCol, VSheet, VContainer, VDivider } from 'vuetify/lib';
+  import { VRow, VCol, VSheet, VContainer, VDivider } from 'vuetify/components';
   import type { VcsAction, VcsUiApp, WindowState } from '@vcmap/ui';
   import {
     VcsCheckbox,
@@ -105,6 +105,7 @@
     VcsLabel,
     VcsSelect,
     VcsTextField,
+    VcsHelp,
   } from '@vcmap/ui';
   import type { PropType, Ref, WritableComputedRef } from 'vue';
   import {
@@ -197,6 +198,7 @@
       VcsSelect,
       VcsCheckbox,
       VcsFormButton,
+      VcsHelp,
     },
     props: {
       featureId: {
