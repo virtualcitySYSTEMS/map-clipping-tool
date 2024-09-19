@@ -34,7 +34,7 @@ import { isValidClippingToolObject } from './setup.js';
 import type { ClippingToolPlugin } from './index.js';
 import { createEditorWindowComponentOptions } from './windowHelper.js';
 
-class ClippingToolCategory extends Category<ClippingToolObject> {
+class ClippingToolCategory extends Category<ClippingToolObject, object> {
   static get className(): string {
     return 'ClippingToolCategory';
   }

@@ -123,7 +123,7 @@
     CesiumMap,
     CesiumTilesetLayer,
     SessionType,
-    getFlatCoordinatesFromGeometry,
+    getFlatCoordinateReferences,
   } from '@vcmap/core';
   import { unByKey } from 'ol/Observable.js';
   import type {
@@ -171,7 +171,7 @@
       return;
     }
 
-    const featureFlatCoords = getFlatCoordinatesFromGeometry(geometry);
+    const featureFlatCoords = getFlatCoordinateReferences(geometry);
     const groundFlatCoords = structuredClone(featureFlatCoords);
     await map.getHeightFromTerrain(groundFlatCoords);
     const maxDiff = featureFlatCoords.reduce((acc, coord, index) => {

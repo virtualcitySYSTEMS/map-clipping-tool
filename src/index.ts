@@ -7,8 +7,6 @@ import type {
 import type { ShallowRef } from 'vue';
 import { shallowRef } from 'vue';
 import type {
-  Category,
-  Ctor,
   EditFeaturesSession,
   EditGeometrySession,
   VectorLayer,
@@ -105,7 +103,7 @@ export default function plugin(): ClippingToolPlugin {
       app.categoryClassRegistry.registerClass(
         this[moduleIdSymbol],
         ClippingToolCategory.className,
-        ClippingToolCategory as unknown as Ctor<typeof Category>,
+        ClippingToolCategory,
       );
       const clippingToolCategoryHelper = await createCategory(vcsUiApp, this);
       ({ collectionComponent } = clippingToolCategoryHelper);
@@ -151,7 +149,7 @@ export default function plugin(): ClippingToolPlugin {
     toJSON(): PluginConfig {
       return {};
     },
-    getConfigEditors(): PluginConfigEditor[] {
+    getConfigEditors(): PluginConfigEditor<object>[] {
       return [];
     },
     destroy,
