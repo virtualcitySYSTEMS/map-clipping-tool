@@ -125,7 +125,7 @@ export async function createCategory(
       {
         type: ClippingToolCategory.className,
         name: 'ClippingTool',
-        title: 'Clipping Planes',
+        title: 'clippingTool.clippingPlanes',
         keyProperty: 'id_' as keyof ClippingToolObject,
       },
       name,

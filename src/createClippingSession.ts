@@ -32,6 +32,7 @@ export async function startCreateClippingSession(
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let stop = (_obj?: Feature): void => {};
   const listener = app.maps.eventHandler.addExclusiveInteraction(
     interaction,

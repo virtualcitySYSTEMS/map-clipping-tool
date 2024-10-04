@@ -152,10 +152,10 @@ export default function plugin(): ClippingToolPlugin {
     getConfigEditors(): PluginConfigEditor<object>[] {
       return [];
     },
-    destroy,
     i18n: {
       en: {
         clippingTool: {
+          clippingPlanes: 'Clipping Planes',
           clippingPlane: 'Clipping Plane',
           temporary: 'Temporary',
           horizontal: 'Horizontal',
@@ -178,6 +178,7 @@ export default function plugin(): ClippingToolPlugin {
       },
       de: {
         clippingTool: {
+          clippingPlanes: 'Schnittebenen',
           clippingPlane: 'Schnittebene',
           temporary: 'Temporäre',
           horizontal: 'Horizontale',
@@ -199,6 +200,9 @@ export default function plugin(): ClippingToolPlugin {
           delete: 'Löschen',
         },
       },
+    },
+    destroy(): void {
+      destroy();
     },
   };
 }

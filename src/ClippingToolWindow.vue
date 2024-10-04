@@ -274,6 +274,10 @@
         { immediate: true },
       );
 
+      function updateWindowTitle(title: string): void {
+        windowState.headerTitle = title;
+      }
+
       watch(
         plugin.activeClippingToolObject,
         () => {
@@ -288,9 +292,16 @@
             layerNames.value = featureProps.layerNames;
             extrudedHeight.value = featureProps.olcs_extrudedHeight;
 
+            updateWindowTitle(featureProps.title);
+
             const listener = plugin.activeClippingToolObject.value.on(
               'propertychange',
               ({ key }) => {
+                if (key === 'title') {
+                  updateWindowTitle(
+                    plugin.activeClippingToolObject.value!.get(key) as string,
+                  );
+                }
                 if (key === 'isInfinite') {
                   isInfinite.value = plugin.activeClippingToolObject.value!.get(
                     key,
@@ -348,7 +359,7 @@
 
             const { action: showHideAction, destroy: destroyShowHideAction } =
               createShowHideAction(plugin.activeClippingToolObject.value);
-            headerActions.value.push(showHideAction);
+            headerActions.value = [showHideAction];
 
             const transformationModes = [
               TransformationMode.TRANSLATE,
