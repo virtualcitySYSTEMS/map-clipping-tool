@@ -213,6 +213,8 @@ export async function setupClippingFeatureLayer(
       featureListeners.forEach((cb) => cb());
       featureListeners.clear();
       collectionListeners.forEach((cb) => cb());
+      app.layers.remove(layer);
+      layer.destroy();
     },
   };
 }

@@ -19,6 +19,7 @@ import ClippingToolCategory, {
 } from './clippingToolCategory.js';
 import type { ClippingType, ClippingToolObject } from './setup.js';
 import {
+  clippingObjectSymbol,
   createActiveClippingObjectRef,
   setupClippingFeatureLayer,
 } from './setup.js';
@@ -132,6 +133,14 @@ export default function plugin(): ClippingToolPlugin {
         destroyClippingToolBox();
         destroyContextMenu();
         layer.destroy();
+        const clippingObject =
+          activeClippingToolObject?.value?.[clippingObjectSymbol];
+        if (
+          clippingObject &&
+          vcsUiApp.maps.clippingObjectManager.hasClippingObject(clippingObject)
+        ) {
+          vcsUiApp.maps.clippingObjectManager.clearExclusiveClippingObjects();
+        }
       };
       return Promise.resolve();
     },
