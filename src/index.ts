@@ -25,7 +25,7 @@ import {
 } from './setup.js';
 import type { CreateClippingFeatureSession } from './createClippingSession.js';
 import { startCreateClippingSession } from './createClippingSession.js';
-import addContextMenu from './contextMenu.js';
+import addContextMenu from './contextMenue.js';
 
 type PluginConfig = Record<never, never>;
 type PluginState = Record<never, never>;
@@ -201,9 +201,9 @@ export default function plugin(): ClippingToolPlugin {
           create: 'Erzeuge',
           createVertical: 'Erzeuge vertikale Schnittebene',
           createHorizontal: 'Erzeuge horizontale Schnittebene',
-          layerNames: 'Layer',
+          layerNames: 'Ebene',
           createDescription:
-            'Setze die Schnittebene mit einem Klick in der Karte.',
+            'Setzen Sie die Schnittebene mit einem Klick in die Karte.',
           zoomTo: 'Auf Element zoomen',
           export: 'Exportieren',
           delete: 'Löschen',

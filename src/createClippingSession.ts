@@ -37,6 +37,9 @@ export async function startCreateClippingSession(
   const listener = app.maps.eventHandler.addExclusiveInteraction(
     interaction,
     () => {
+      if (app.windowManager.has(windowId)) {
+        app.windowManager.remove(windowId);
+      }
       stop();
     },
   );

@@ -1,18 +1,10 @@
 import { downloadText, type VcsAction, type VcsUiApp } from '@vcmap/ui';
 import type { InteractionEvent } from '@vcmap/core';
-import {
-  CesiumMap,
-  createClippingFeature,
-  Projection,
-  TransformationMode,
-  writeGeoJSON,
-} from '@vcmap/core';
-import { nextTick } from 'vue';
+import { TransformationMode, writeGeoJSON } from '@vcmap/core';
 import type { ClippingToolPlugin } from './index.js';
 import { name } from '../package.json';
 import { createEditAction, createTransformationActions } from './actions.js';
-import type { ClippingToolObject, ClippingType } from './setup.js';
-import { createEditorWindowComponentOptions } from './windowHelper.js';
+import type { ClippingType } from './setup.js';
 
 export default function addContextMenu(
   app: VcsUiApp,
@@ -119,50 +111,6 @@ export default function addContextMenu(
           activeClippingToolObject.value = undefined;
         },
       });
-    } else if (event.position && app.maps.activeMap instanceof CesiumMap) {
-      contextEntries.push(
-        ...['horizontal', 'vertical'].map((clippingType) => {
-          const capitalizedType =
-            clippingType.charAt(0).toUpperCase() + clippingType.slice(1);
-          return {
-            name: `clippingTool.create${capitalizedType}`,
-            icon: `$vcsClipping${capitalizedType}`,
-            callback: async (): Promise<void> => {
-              if (event.position) {
-                const camera = (event.map as CesiumMap).getScene()?.camera;
-                const coordinate = Projection.mercatorToWgs84(event.position);
-                if (camera) {
-                  plugin.activeClippingToolObject.value = undefined;
-                  app.windowManager.remove(`${collectionComponent.id}-editor`);
-                  await nextTick();
-
-                  if (
-                    !app.windowManager.has(`${collectionComponent.id}-editor`)
-                  ) {
-                    app.windowManager.add(
-                      createEditorWindowComponentOptions(
-                        app,
-                        undefined,
-                        `${collectionComponent.id}-editor`,
-                      ),
-                      name,
-                    );
-                  }
-                  const feature = createClippingFeature(
-                    coordinate,
-                    camera,
-                    clippingType === 'vertical',
-                    undefined,
-                    clippingType === 'vertical' ? Math.PI / 2 : 0,
-                  ) as ClippingToolObject;
-                  plugin.clippingFeatureLayer.addFeatures([feature]);
-                  plugin.activeClippingToolObject.value = feature;
-                }
-              }
-            },
-          };
-        }),
-      );
     }
     return contextEntries;
   }
