@@ -174,7 +174,7 @@ export default function plugin(): ClippingToolPlugin {
           isInverted: 'Is inverted',
           showFeature: 'Show feature',
           new: 'New',
-          addToMyWorkspace: 'Add to MyWorkspace',
+          addToMyWorkspace: 'Add to My Workspace',
           create: 'Create',
           createVertical: 'Create vertical clipping plane',
           createHorizontal: 'Create horizontal clipping plane',
