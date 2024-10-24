@@ -29,10 +29,7 @@ export function createEditorWindowComponentOptions(
     parentId: 'category-manager',
     slot: WindowSlot.DYNAMIC_CHILD,
     state: {
-      headerTitle: (item?.get('title') as string) ?? [
-        'clippingTool.create',
-        'clippingTool.clippingPlane',
-      ],
+      headerTitle: (item?.get('title') as string) ?? 'clippingTool.create',
       headerIcon: ClippingToolIcons[item?.get('clippingType') as ClippingType],
       styles: { width: WINDOW_WIDTH, height: WINDOW_HEIGHT },
       infoUrlCallback: app.getHelpUrlCallback(INFO_URL),

@@ -256,10 +256,7 @@
           currentTransformationMode.value = undefined;
 
           if (editorSession?.type === SessionType.CREATE) {
-            windowState.headerTitle = [
-              'clippingTool.create',
-              'clippingTool.clippingPlane',
-            ];
+            windowState.headerTitle = 'clippingTool.create';
 
             windowState.headerIcon =
               ClippingToolIcons[editorSession.clippingType];
