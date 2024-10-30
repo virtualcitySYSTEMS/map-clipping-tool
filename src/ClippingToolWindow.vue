@@ -118,14 +118,12 @@
     provide,
   } from 'vue';
   import {
-    EditFeaturesSession,
     TransformationMode,
-    CesiumMap,
     CesiumTilesetLayer,
     SessionType,
-    getFlatCoordinateReferences,
   } from '@vcmap/core';
   import { unByKey } from 'ol/Observable.js';
+  import Feature from 'ol/Feature.js';
   import type {
     ClippingObjectProperties,
     ClippingType,
@@ -154,33 +152,6 @@
         feature.value?.set(key, v);
       },
     });
-  }
-
-  async function placeCurrentFeaturesOnTerrain(
-    app: VcsUiApp,
-    clippingToolObject?: ClippingToolObject,
-    editSession?: EditFeaturesSession,
-  ): Promise<void> {
-    const map = app.maps.activeMap;
-    const geometry = clippingToolObject?.getGeometry();
-    if (
-      editSession?.type !== SessionType.EDIT_FEATURES ||
-      !(map instanceof CesiumMap) ||
-      !geometry
-    ) {
-      return;
-    }
-
-    const featureFlatCoords = getFlatCoordinateReferences(geometry);
-    const groundFlatCoords = structuredClone(featureFlatCoords);
-    await map.getHeightFromTerrain(groundFlatCoords);
-    const maxDiff = featureFlatCoords.reduce((acc, coord, index) => {
-      const current = groundFlatCoords[index][2] - coord[2];
-      return current > acc ? current : acc;
-    }, -Infinity);
-    if (Number.isFinite(maxDiff) && maxDiff !== 0) {
-      editSession?.translate(0, 0, maxDiff);
-    }
   }
 
   export default defineComponent({
@@ -218,17 +189,13 @@
       const plugin = app.plugins.getByKey(name) as ClippingToolPlugin;
       const manager = {
         currentEditSession: plugin.editorSession,
-        placeCurrentFeaturesOnTerrain: (): Promise<void> => {
-          if (plugin.editorSession.value?.type === SessionType.EDIT_FEATURES) {
-            return placeCurrentFeaturesOnTerrain(
-              app,
-              plugin.activeClippingToolObject.value,
-              plugin.editorSession.value,
-            );
-          } else {
-            return Promise.resolve();
+        currentFeatures: computed(() => {
+          const features: Feature[] = [];
+          if (plugin.activeClippingToolObject.value) {
+            features.push(plugin.activeClippingToolObject.value);
           }
-        },
+          return features;
+        }),
       };
 
       provide('manager', manager);
