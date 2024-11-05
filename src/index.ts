@@ -199,8 +199,8 @@ export default function plugin(): ClippingToolPlugin {
           new: 'Neu',
           addToMyWorkspace: 'Zu Mein Arbeitsbereich hinzufügen',
           create: 'Schnittebene erzeugen',
-          createVertical: 'Vertikale Schnitt erzeugen',
-          createHorizontal: 'Horizontale Schnitt erzeugen',
+          createVertical: 'Vertikalen Schnitt erzeugen',
+          createHorizontal: 'Horizontalen Schnitt erzeugen',
           layerNames: 'Ebene',
           createDescription:
             'Setzen Sie die Schnittebene mit einem Klick in die Karte.',
