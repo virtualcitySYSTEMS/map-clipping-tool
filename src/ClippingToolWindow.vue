@@ -1,5 +1,10 @@
 <template>
-  <v-sheet>
+  <VcsWorkspaceWrapper
+    :show-footer="!isCreate"
+    :disable-add="isPersisted"
+    @add-clicked="addToMyWorkspace"
+    @new-clicked="createNewClippingToolObject"
+  >
     <VcsHelp v-if="isCreate">
       {{ $t('clippingTool.createDescription') }}
     </VcsHelp>
@@ -24,9 +29,9 @@
         </template>
         <v-row no-gutters>
           <v-col cols="6">
-            <VcsLabel html-for="clipping-tool-layernames">{{
-              $t('clippingTool.layerNames')
-            }}</VcsLabel>
+            <VcsLabel html-for="clipping-tool-layernames">
+              {{ $t('clippingTool.layerNames') }}
+            </VcsLabel>
           </v-col>
           <v-col cols="6">
             <VcsSelect
@@ -39,9 +44,9 @@
         </v-row>
         <v-row no-gutters>
           <v-col cols="6">
-            <VcsLabel html-for="clipping-tool-extrusion">{{
-              $t('components.vectorProperties.extrudedHeight')
-            }}</VcsLabel>
+            <VcsLabel html-for="clipping-tool-extrusion">
+              {{ $t('components.vectorProperties.extrudedHeight') }}
+            </VcsLabel>
           </v-col>
           <v-col cols="6">
             <VcsTextField
@@ -78,34 +83,22 @@
           />
         </v-row>
       </v-container>
-      <v-divider />
-      <div class="d-flex w-full justify-space-between px-2 pt-2 pb-1">
-        <VcsFormButton
-          tooltip="clippingTool.addToMyWorkspace"
-          icon="$vcsComponentsPlus"
-          :disabled="isPersisted"
-          @click="addToMyWorkspace()"
-        />
-        <VcsFormButton variant="filled" @click="createNewClippingToolObject()">
-          {{ $t('clippingTool.new') }}
-        </VcsFormButton>
-      </div>
     </VcsFormSection>
-  </v-sheet>
+  </VcsWorkspaceWrapper>
 </template>
 
 <script lang="ts">
-  import { VRow, VCol, VSheet, VContainer, VDivider } from 'vuetify/components';
+  import { VRow, VCol, VContainer, VDivider } from 'vuetify/components';
   import type { VcsAction, VcsUiApp, WindowState } from '@vcmap/ui';
   import {
     VcsCheckbox,
     VcsFeatureTransforms,
-    VcsFormButton,
     VcsFormSection,
     VcsLabel,
     VcsSelect,
     VcsTextField,
     VcsHelp,
+    VcsWorkspaceWrapper,
   } from '@vcmap/ui';
   import type { PropType, Ref, WritableComputedRef } from 'vue';
   import {
@@ -184,7 +177,6 @@
     components: {
       VRow,
       VCol,
-      VSheet,
       VContainer,
       VDivider,
       VcsFormSection,
@@ -193,8 +185,8 @@
       VcsFeatureTransforms,
       VcsSelect,
       VcsCheckbox,
-      VcsFormButton,
       VcsHelp,
+      VcsWorkspaceWrapper,
     },
     props: {
       featureId: {
