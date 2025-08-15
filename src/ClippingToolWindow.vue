@@ -31,8 +31,8 @@
           <v-col cols="6">
             <VcsSelect
               id="clipping-tool-layernames"
-              :items="[...availableLayerNames]"
               v-model="layerNames"
+              :items="[...availableLayerNames]"
               multiple
             />
           </v-col>
@@ -46,33 +46,33 @@
           <v-col cols="6">
             <VcsTextField
               id="clipping-tool-extrusion"
+              v-model.number="extrudedHeight"
               type="number"
               unit="m"
               placeholder="0"
-              v-model.number="extrudedHeight"
             />
           </v-col>
         </v-row>
         <v-row no-gutters>
           <VcsCheckbox
-            :label="`clippingTool.isInfinite`"
             v-model="isInfinite"
+            :label="`clippingTool.isInfinite`"
             :true-value="true"
             :false-value="false"
           />
         </v-row>
         <v-row no-gutters>
           <VcsCheckbox
-            :label="`clippingTool.cutsGlobe`"
             v-model="cutsGlobe"
+            :label="`clippingTool.cutsGlobe`"
             :true-value="true"
             :false-value="false"
           />
         </v-row>
         <v-row no-gutters>
           <VcsCheckbox
-            :label="`clippingTool.isInverted`"
             v-model="isInverted"
+            :label="`clippingTool.isInverted`"
             :true-value="true"
             :false-value="false"
           />
@@ -81,12 +81,12 @@
       <v-divider />
       <div class="d-flex w-full justify-space-between px-2 pt-2 pb-1">
         <VcsFormButton
-          @click="addToMyWorkspace()"
           tooltip="clippingTool.addToMyWorkspace"
           icon="$vcsComponentsPlus"
           :disabled="isPersisted"
+          @click="addToMyWorkspace()"
         />
-        <VcsFormButton @click="createNewClippingToolObject()" variant="filled">
+        <VcsFormButton variant="filled" @click="createNewClippingToolObject()">
           {{ $t('clippingTool.new') }}
         </VcsFormButton>
       </div>
@@ -123,7 +123,7 @@
     SessionType,
   } from '@vcmap/core';
   import { unByKey } from 'ol/Observable.js';
-  import Feature from 'ol/Feature.js';
+  import type Feature from 'ol/Feature.js';
   import type {
     ClippingObjectProperties,
     ClippingType,
@@ -136,8 +136,7 @@
     createShowHideAction,
     createTransformationActions,
   } from './actions.js';
-  import { createTitleForClippingToolObject } from './clippingToolCategory.js';
-  import { ClippingToolIcons } from './windowHelper.js';
+  import { clippingToolIcons } from './constants.js';
 
   function createPropertyComputed<T>(
     localValue: Ref<T>,
@@ -152,6 +151,32 @@
         feature.value?.set(key, v);
       },
     });
+  }
+
+  export function createTitleForClippingToolObject(
+    clippingObjectType: ClippingType,
+    persistedClippingToolObjects: ClippingToolObject[],
+  ): string {
+    let title: string | undefined;
+    let count = 0;
+
+    const sameTypeObjectNames = new Set(
+      persistedClippingToolObjects
+        .filter(
+          (object) =>
+            (object.get('clippingType') as ClippingType) === clippingObjectType,
+        )
+        .map((object) => object.get('title') as string),
+    );
+
+    do {
+      count += 1;
+      if (!sameTypeObjectNames.has(`${clippingObjectType}-${count}`)) {
+        title = `${clippingObjectType}-${count}`;
+      }
+    } while (!title);
+
+    return title;
   }
 
   export default defineComponent({
@@ -226,7 +251,7 @@
             windowState.headerTitle = 'clippingTool.create';
 
             windowState.headerIcon =
-              ClippingToolIcons[editorSession.clippingType];
+              clippingToolIcons[editorSession.clippingType];
           } else if (editorSession?.type === SessionType.EDIT_FEATURES) {
             currentTransformationMode.value = editorSession.mode;
             transformationModeListener =
@@ -304,7 +329,7 @@
                 `clippingTool.${plugin.activeClippingToolObject.value?.get('clippingType')}`,
               ];
               windowState.headerIcon =
-                ClippingToolIcons[
+                clippingToolIcons[
                   plugin.activeClippingToolObject.value.get(
                     'clippingType',
                   ) as ClippingType
@@ -334,7 +359,6 @@
               const { action: editAction, destroy: destroyEditAction } =
                 createEditAction(
                   app,
-                  plugin.collectionComponent,
                   plugin.clippingFeatureLayer,
                   plugin.activeClippingToolObject.value,
                   plugin.editorSession,
@@ -350,7 +374,6 @@
               destroy: destroyTransformationActions,
             } = createTransformationActions(
               app,
-              plugin.collectionComponent,
               plugin.clippingFeatureLayer,
               plugin.activeClippingToolObject.value,
               plugin.editorSession,
@@ -362,7 +385,9 @@
             destroyActions.push(destroyShowHideAction);
 
             destroyHeaderActions = (): void => {
-              destroyActions.forEach((callback) => callback());
+              destroyActions.forEach((callback) => {
+                callback();
+              });
             };
           } else {
             headerActions.value = [];
@@ -426,7 +451,9 @@
       ];
 
       onUnmounted(() => {
-        layerListeners.forEach((listener) => listener());
+        layerListeners.forEach((listener) => {
+          listener();
+        });
         destroyHeaderActions();
         manager.currentEditSession.value?.stop();
       });

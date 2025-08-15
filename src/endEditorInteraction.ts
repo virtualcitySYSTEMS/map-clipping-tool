@@ -1,15 +1,17 @@
-import {
-  AbstractInteraction,
+import type {
   EditFeaturesSession,
   EditGeometrySession,
   EventAfterEventHandler,
+} from '@vcmap/core';
+import {
+  AbstractInteraction,
   EventType,
   SessionType,
   handlerSymbol,
 } from '@vcmap/core';
-import { ShallowRef } from 'vue';
-import Feature from 'ol/Feature.js';
-import { CreateClippingFeatureSession } from './createClippingSession.js';
+import type { ShallowRef } from 'vue';
+import type Feature from 'ol/Feature.js';
+import type { CreateClippingFeatureSession } from './createClippingSession.js';
 
 /**
  * Interaction that ensures that a editor session is stopped when the user

@@ -1,33 +1,29 @@
 import { reactive, watch, type ShallowRef } from 'vue';
-import type {
-  EditorCollectionComponentClass,
-  VcsAction,
-  VcsUiApp,
-} from '@vcmap/ui';
+import type { VcsAction, VcsUiApp } from '@vcmap/ui';
 import { EditorTransformationIcons } from '@vcmap/ui';
 import type {
   EditFeaturesSession,
   EditGeometrySession,
   VectorLayer,
+  TransformationMode,
 } from '@vcmap/core';
 import {
   EventType,
   SessionType,
   startEditFeaturesSession,
   startEditGeometrySession,
-  TransformationMode,
 } from '@vcmap/core';
 import { unByKey } from 'ol/Observable.js';
-import { EventsKey } from 'ol/events.js';
-import { Coordinate } from 'ol/coordinate.js';
+import type { EventsKey } from 'ol/events.js';
+import type { Coordinate } from 'ol/coordinate.js';
+import { name } from '../package.json';
 import type { ClippingToolObject } from './setup.js';
 import type { CreateClippingFeatureSession } from './createClippingSession.js';
-import { openWindowForClippingToolObject } from './windowHelper.js';
 import EndEditorInteraction from './endEditorInteraction.js';
+import type { ClippingToolPlugin } from './index.js';
 
 export function createTransformationActions(
   app: VcsUiApp,
-  collectionComponent: EditorCollectionComponentClass<ClippingToolObject>,
   layer: VectorLayer,
   feature: ClippingToolObject,
   currentEditorSession: ShallowRef<
@@ -38,6 +34,7 @@ export function createTransformationActions(
   >,
   modes: TransformationMode[],
 ): { actions: VcsAction[]; destroy: () => void } {
+  const plugin = app.plugins.getByKey(name) as ClippingToolPlugin;
   const actions = new Map<TransformationMode, VcsAction>();
 
   modes.forEach((mode) => {
@@ -56,7 +53,7 @@ export function createTransformationActions(
               currentEditorSession.value.setMode(mode);
             }
           } else {
-            openWindowForClippingToolObject(app, collectionComponent, feature);
+            plugin.openWindowForClippingToolObject(feature);
             const editFeaturesSession = startEditFeaturesSession(
               app,
               layer,
@@ -114,7 +111,6 @@ export function createTransformationActions(
 
 export function createEditAction(
   app: VcsUiApp,
-  collectionComponent: EditorCollectionComponentClass<ClippingToolObject>,
   layer: VectorLayer,
   feature: ClippingToolObject,
   currentEditorSession: ShallowRef<
@@ -124,6 +120,7 @@ export function createEditAction(
     | undefined
   >,
 ): { action: VcsAction; destroy: () => void } {
+  const plugin = app.plugins.getByKey(name) as ClippingToolPlugin;
   const action: VcsAction = reactive({
     name: 'components.editor.edit',
     title: 'components.editor.edit',
@@ -137,14 +134,11 @@ export function createEditAction(
           app,
           layer,
           undefined,
-          {
-            denyInsertion: true,
-            denyRemoval: true,
-          },
+          { denyInsertion: true, denyRemoval: true },
         );
 
         currentEditorSession.value.setFeature(feature);
-        openWindowForClippingToolObject(app, collectionComponent, feature);
+        plugin.openWindowForClippingToolObject(feature);
 
         const endEditorInteraction = new EndEditorInteraction(
           currentEditorSession,

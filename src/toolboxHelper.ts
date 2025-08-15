@@ -2,11 +2,8 @@ import type { SelectToolboxComponentOptions, VcsUiApp } from '@vcmap/ui';
 import { ToolboxType } from '@vcmap/ui';
 import { reactive, watch } from 'vue';
 import { CesiumMap } from '@vcmap/core';
-import {
-  ClippingToolIcons,
-  openWindowForClippingToolObject,
-} from './windowHelper.js';
 import type { ClippingToolPlugin } from './index.js';
+import { clippingToolIcons } from './constants.js';
 
 type ClippingToolBox = {
   destroy: () => void;
@@ -30,9 +27,7 @@ function createClippingToolBox(
       async callback(): Promise<void> {
         if (this.active) {
           if (this.background && plugin.activeClippingToolObject.value) {
-            openWindowForClippingToolObject(
-              app,
-              plugin.collectionComponent,
+            plugin.openWindowForClippingToolObject(
               plugin.activeClippingToolObject.value,
             );
           } else {
@@ -55,12 +50,12 @@ function createClippingToolBox(
       tools: [
         {
           name: 'horizontal',
-          icon: ClippingToolIcons.horizontal,
+          icon: clippingToolIcons.horizontal,
           title: 'clippingTool.createHorizontal',
         },
         {
           name: 'vertical',
-          icon: ClippingToolIcons.vertical,
+          icon: clippingToolIcons.vertical,
           title: 'clippingTool.createVertical',
         },
       ],
@@ -108,7 +103,9 @@ function createClippingToolBox(
     destroy(): void {
       pluginStateWatcher();
       clippingToolObjectWatcher();
-      listeners.forEach((cb) => cb());
+      listeners.forEach((cb) => {
+        cb();
+      });
     },
     toolbox,
   };

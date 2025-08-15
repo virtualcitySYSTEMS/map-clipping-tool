@@ -25,16 +25,12 @@ import { reactive, watch } from 'vue';
 import { unByKey } from 'ol/Observable.js';
 import type Feature from 'ol/Feature.js';
 import { name } from '../package.json';
-import type {
-  ClippingType,
-  ClippingObjectProperties,
-  ClippingToolObject,
-} from './setup.js';
+import type { ClippingObjectProperties, ClippingToolObject } from './setup.js';
 import { isValidClippingToolObject } from './setup.js';
 import type { ClippingToolPlugin } from './index.js';
 import { createEditorWindowComponentOptions } from './windowHelper.js';
 
-class ClippingToolCategory extends Category<ClippingToolObject, object> {
+class ClippingToolCategory extends Category<ClippingToolObject> {
   static get className(): string {
     return 'ClippingToolCategory';
   }
@@ -58,32 +54,6 @@ class ClippingToolCategory extends Category<ClippingToolObject, object> {
 }
 
 export default ClippingToolCategory;
-
-export function createTitleForClippingToolObject(
-  clippingObjectType: ClippingType,
-  persistedClippingToolObjects: ClippingToolObject[],
-): string {
-  let title: string | undefined;
-  let count = 0;
-
-  const sameTypeObjectNames = new Set(
-    persistedClippingToolObjects
-      .filter(
-        (object) =>
-          (object.get('clippingType') as ClippingType) === clippingObjectType,
-      )
-      .map((object) => object.get('title') as string),
-  );
-
-  do {
-    count += 1;
-    if (!sameTypeObjectNames.has(`${clippingObjectType}-${count}`)) {
-      title = `${clippingObjectType}-${count}`;
-    }
-  } while (!title);
-
-  return title;
-}
 
 function createVisibilityAction(
   item: ClippingToolObject,

@@ -44,7 +44,6 @@ export default function addContextMenu(
         const { action: editAction, destroy: destroyEditAction } =
           createEditAction(
             app,
-            collectionComponent,
             clippingFeatureLayer,
             activeClippingToolObject.value,
             editorSession,
@@ -60,7 +59,6 @@ export default function addContextMenu(
         destroy: destroyTransformationActions,
       } = createTransformationActions(
         app,
-        collectionComponent,
         clippingFeatureLayer,
         activeClippingToolObject.value,
         editorSession,
@@ -70,7 +68,9 @@ export default function addContextMenu(
       destroyActions.push(destroyTransformationActions);
 
       destroyContextActions = (): void => {
-        destroyActions.forEach((callback) => callback());
+        destroyActions.forEach((callback) => {
+          callback();
+        });
       };
 
       contextEntries.push({

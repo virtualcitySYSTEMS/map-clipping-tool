@@ -26,6 +26,7 @@ import {
 import type { CreateClippingFeatureSession } from './createClippingSession.js';
 import { startCreateClippingSession } from './createClippingSession.js';
 import addContextMenu from './contextMenue.js';
+import { createEditorWindowComponentOptions } from './windowHelper';
 
 type PluginConfig = Record<never, never>;
 type PluginState = Record<never, never>;
@@ -44,6 +45,7 @@ export type ClippingToolPlugin = VcsPlugin<PluginConfig, PluginState> & {
     this: ClippingToolPlugin,
     type: ClippingType,
   ): Promise<void>;
+  openWindowForClippingToolObject(clippingToolObject: ClippingToolObject): void;
 };
 
 export default function plugin(): ClippingToolPlugin {
@@ -151,6 +153,33 @@ export default function plugin(): ClippingToolPlugin {
         this,
         `${this.collectionComponent.id}-editor`,
       );
+    },
+    openWindowForClippingToolObject(
+      clippingToolObject: ClippingToolObject,
+    ): void {
+      if (app?.windowManager.has(`${this.collectionComponent.id}-editor`)) {
+        if (activeClippingToolObject?.value !== clippingToolObject) {
+          app.windowManager.remove(`${this.collectionComponent.id}-editor`);
+        } else {
+          return;
+        }
+      }
+
+      if (this.collectionComponent.collection.has(clippingToolObject)) {
+        this.collectionComponent.selection.value = [
+          this.collectionComponent.getListItemForItem(clippingToolObject)!,
+        ];
+        this.collectionComponent.openEditorWindow(clippingToolObject);
+      } else {
+        app!.windowManager.add(
+          createEditorWindowComponentOptions(
+            app!,
+            clippingToolObject,
+            `${this.collectionComponent.id}-editor`,
+          ),
+          name,
+        );
+      }
     },
     getDefaultOptions(): PluginConfig {
       return {};

@@ -1,4 +1,5 @@
-/* eslint-disable import/no-extraneous-dependencies, import/first */
+/* eslint-disable import/first */
+/* global global */
 import { vi } from 'vitest';
 
 vi.hoisted(() => {

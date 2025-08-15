@@ -126,7 +126,9 @@ function addFeatureListeners(f: ClippingToolObject): () => void {
           clippingObject.addLayer(layerName);
         }
       });
-      toRemove.forEach((layerName) => clippingObject.removeLayer(layerName));
+      toRemove.forEach((layerName) => {
+        clippingObject.removeLayer(layerName);
+      });
     }
   });
 
@@ -210,9 +212,13 @@ export async function setupClippingFeatureLayer(
     layer,
     destroy: (): void => {
       unByKey(layerListeners);
-      featureListeners.forEach((cb) => cb());
+      featureListeners.forEach((cb) => {
+        cb();
+      });
       featureListeners.clear();
-      collectionListeners.forEach((cb) => cb());
+      collectionListeners.forEach((cb) => {
+        cb();
+      });
       app.layers.remove(layer);
       layer.destroy();
     },
