@@ -16,6 +16,7 @@ import {
   emptyStyle,
   getClippingOptions,
   getDefaultHighlightStyle,
+  I3SLayer,
   markVolatile,
   mercatorProjection,
   moduleIdSymbol,
@@ -173,7 +174,11 @@ export async function setupClippingFeatureLayer(
             : 'horizontal';
 
         const layerNames: string[] = [...app.layers]
-          .filter((l) => l.active && l instanceof CesiumTilesetLayer)
+          .filter(
+            (l) =>
+              l.active &&
+              (l instanceof CesiumTilesetLayer || l instanceof I3SLayer),
+          )
           .map((l) => l.name);
 
         props = {

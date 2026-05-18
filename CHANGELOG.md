@@ -1,3 +1,8 @@
+# v4.0.0
+
+- Updated @vcmap/core and @vcmap/ui to 6.3
+- Added clipping support for I3SLayer
+
 # v3.0.1
 
 - Added config options, allowing to set default settings for new clipping planes

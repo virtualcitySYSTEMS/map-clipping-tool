@@ -110,10 +110,12 @@
     watch,
     provide,
   } from 'vue';
+  import type { Layer } from '@vcmap/core';
   import {
     TransformationMode,
     CesiumTilesetLayer,
     SessionType,
+    I3SLayer,
   } from '@vcmap/core';
   import { unByKey } from 'ol/Observable.js';
   import type Feature from 'ol/Feature.js';
@@ -408,17 +410,19 @@
         { immediate: true },
       );
 
+      const isSupportedLayer = (layer: Layer): boolean => {
+        return layer instanceof CesiumTilesetLayer || layer instanceof I3SLayer;
+      };
+
       const availableLayerNames = ref(
         [...app.layers]
-          .filter(
-            (layer) => layer.active && layer instanceof CesiumTilesetLayer,
-          )
+          .filter((layer) => layer.active && isSupportedLayer(layer))
           .map((layer) => layer.name),
       );
 
       const layerListeners = [
         app.layers.added.addEventListener((layer) => {
-          if (layer instanceof CesiumTilesetLayer && layer.active) {
+          if (isSupportedLayer(layer) && layer.active) {
             availableLayerNames.value.push(layer.name);
           }
         }),
@@ -429,7 +433,7 @@
           }
         }),
         app.layers.stateChanged.addEventListener((layer) => {
-          if (layer instanceof CesiumTilesetLayer) {
+          if (isSupportedLayer(layer)) {
             if (layer.active) {
               availableLayerNames.value.push(layer.name);
             } else {
