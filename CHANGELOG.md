@@ -1,12 +1,20 @@
+# v3.0.1
+
+- Added config options, allowing to set default settings for new clipping planes
+
 # v3.0.0
 
-- update @vcmap/core and @vcmap/ui to 6.2
+- Updated @vcmap/core and @vcmap/ui to 6.2
 
 # v2.0.2
 
-- fix typo in toolbox button tooltip
+- Fixed a typo in toolbox button tooltip
 
 # v2.0.0
 
-- update @vcmap/core and @vcmap/ui to 6.x
-- fix windowTitle update, feature actions update and German category name in MyWorkspace
+- Updated @vcmap/core and @vcmap/ui to 6.x
+- Fixed windowTitle update, feature actions update and German category name in MyWorkspace
+
+# v1.0.0
+
+Clipping Tool Plugin

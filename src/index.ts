@@ -17,6 +17,7 @@ import addClippingToolButtons from './toolboxHelper.js';
 import ClippingToolCategory, {
   createCategory,
 } from './clippingToolCategory.js';
+import ConfigEditor, { getDefaultOptions } from './ConfigEditor.vue';
 import type { ClippingType, ClippingToolObject } from './setup.js';
 import {
   clippingObjectSymbol,
@@ -28,10 +29,17 @@ import { startCreateClippingSession } from './createClippingSession.js';
 import addContextMenu from './contextMenue.js';
 import { createEditorWindowComponentOptions } from './windowHelper';
 
-type PluginConfig = Record<never, never>;
+export type ClippingConfig = {
+  horizontalExtrusionHeight?: number;
+  verticalExtrusionHeight?: number;
+  isInfinite?: boolean;
+  cutsGlobe?: boolean;
+  verticalRotation?: number;
+};
 type PluginState = Record<never, never>;
 
-export type ClippingToolPlugin = VcsPlugin<PluginConfig, PluginState> & {
+export type ClippingToolPlugin = VcsPlugin<ClippingConfig, PluginState> & {
+  readonly config: Required<ClippingConfig>;
   readonly clippingFeatureLayer: VectorLayer;
   readonly collectionComponent: EditorCollectionComponentClass<ClippingToolObject>;
   readonly activeClippingToolObject: ShallowRef<ClippingToolObject | undefined>;
@@ -48,7 +56,7 @@ export type ClippingToolPlugin = VcsPlugin<PluginConfig, PluginState> & {
   openWindowForClippingToolObject(clippingToolObject: ClippingToolObject): void;
 };
 
-export default function plugin(): ClippingToolPlugin {
+export default function plugin(options: ClippingConfig): ClippingToolPlugin {
   let collectionComponent:
     | EditorCollectionComponentClass<ClippingToolObject>
     | undefined;
@@ -65,6 +73,11 @@ export default function plugin(): ClippingToolPlugin {
   > = shallowRef(undefined);
   let destroy = (): void => {};
 
+  const config = {
+    ...getDefaultOptions(),
+    ...options,
+  };
+
   return {
     get name(): string {
       return name;
@@ -74,6 +87,9 @@ export default function plugin(): ClippingToolPlugin {
     },
     get mapVersion(): string {
       return mapVersion;
+    },
+    get config(): Required<ClippingConfig> {
+      return config;
     },
     get activeClippingToolObject(): ShallowRef<ClippingToolObject | undefined> {
       if (!activeClippingToolObject) {
@@ -113,6 +129,7 @@ export default function plugin(): ClippingToolPlugin {
       const layer = await setupClippingFeatureLayer(
         vcsUiApp,
         clippingToolCategoryHelper.collectionComponent.collection,
+        config,
       );
       clippingFeatureLayer = layer.layer;
       const activeRef = createActiveClippingObjectRef(
@@ -181,14 +198,44 @@ export default function plugin(): ClippingToolPlugin {
         );
       }
     },
-    getDefaultOptions(): PluginConfig {
-      return {};
-    },
-    toJSON(): PluginConfig {
-      return {};
+    getDefaultOptions,
+    toJSON(): ClippingConfig {
+      const serial: ClippingConfig = {};
+      const defaultOptions = getDefaultOptions();
+      if (
+        config.horizontalExtrusionHeight !==
+        defaultOptions.horizontalExtrusionHeight
+      ) {
+        serial.horizontalExtrusionHeight = config.horizontalExtrusionHeight;
+      }
+      if (
+        config.verticalExtrusionHeight !==
+        defaultOptions.verticalExtrusionHeight
+      ) {
+        serial.verticalExtrusionHeight = config.verticalExtrusionHeight;
+      }
+      if (config.isInfinite !== defaultOptions.isInfinite) {
+        serial.isInfinite = config.isInfinite;
+      }
+      if (config.cutsGlobe !== defaultOptions.cutsGlobe) {
+        serial.cutsGlobe = config.cutsGlobe;
+      }
+      if (config.verticalRotation !== defaultOptions.verticalRotation) {
+        serial.verticalRotation = config.verticalRotation;
+      }
+      return serial;
     },
     getConfigEditors(): PluginConfigEditor<object>[] {
-      return [];
+      return [
+        {
+          component: ConfigEditor,
+          title: 'Clipping Tool Config Editor',
+          infoUrlCallback: app?.getHelpUrlCallback(
+            '/components/plugins/clippingToolConfig.html',
+            'app-configurator',
+          ),
+        },
+      ];
     },
     i18n: {
       en: {
@@ -210,6 +257,16 @@ export default function plugin(): ClippingToolPlugin {
           zoomTo: 'Zoom to item',
           export: 'Export',
           delete: 'Delete',
+          config: {
+            startupSettings: 'Startup settings',
+            horizontalExtrusionHeight: 'Horizontal extrusion height',
+            verticalExtrusionHeight: 'Vertical extrusion height',
+            isInfinite: 'Is infinite',
+            cutsGlobe: 'Cuts globe',
+            verticalRotation: 'Vertical rotation',
+            verticalRotationHelpText:
+              'At 0°, the plane faces away from the camera; positive values rotate anti-clockwise.',
+          },
         },
       },
       de: {
@@ -232,6 +289,16 @@ export default function plugin(): ClippingToolPlugin {
           zoomTo: 'Auf Element zoomen',
           export: 'Exportieren',
           delete: 'Löschen',
+          config: {
+            startupSettings: 'Starteinstellungen',
+            horizontalExtrusionHeight: 'Horizontale Extrusionshöhe',
+            verticalExtrusionHeight: 'Vertikale Extrusionshöhe',
+            isInfinite: 'Ist unendlich',
+            cutsGlobe: 'Schneidet Globus',
+            verticalRotation: 'Vertikale Rotation',
+            verticalRotationHelpText:
+              'Bei 0° zeigt die Ebene von der Kamera weg; positive Werte drehen gegen den Uhrzeigersinn.',
+          },
         },
       },
     },

@@ -1,8 +1,10 @@
 import { getLogger } from '@vcsuite/logger';
+import { Math as CesiumMath } from '@vcmap-cesium/engine';
 import type { ClippingPlaneCollection } from '@vcmap-cesium/engine';
 import type { ShallowRef } from 'vue';
 import { shallowRef, watch } from 'vue';
 import { unByKey } from 'ol/Observable.js';
+import { getCenter } from 'ol/extent.js';
 import type Feature from 'ol/Feature';
 import type { LineString, Polygon } from 'ol/geom';
 import type { Collection } from '@vcmap/core';
@@ -22,6 +24,7 @@ import {
 import type { CollectionComponentClass, VcsUiApp } from '@vcmap/ui';
 import type Geometry from 'ol/geom/Geometry';
 import { name } from '../package.json';
+import type { ClippingConfig } from './index.js';
 
 export type ClippingType = 'vertical' | 'horizontal';
 
@@ -141,6 +144,7 @@ function addFeatureListeners(f: ClippingToolObject): () => void {
 export async function setupClippingFeatureLayer(
   app: VcsUiApp,
   collection: Collection<ClippingToolObject>,
+  config: Required<ClippingConfig>,
 ): Promise<{ destroy: () => void; layer: VectorLayer }> {
   const layer = new VectorLayer({
     projection: mercatorProjection.toJSON(),
@@ -174,14 +178,25 @@ export async function setupClippingFeatureLayer(
 
         props = {
           title: clippingType,
+          olcs_extrudedHeight:
+            clippingType === 'horizontal'
+              ? config.horizontalExtrusionHeight
+              : config.verticalExtrusionHeight,
           clippingType,
           isInverted: false,
-          isInfinite: false,
+          isInfinite: config.isInfinite,
+          cutsGlobe: config.cutsGlobe,
           showFeature: true,
           layerNames,
-          cutsGlobe: false,
         };
         f.setProperties(props);
+        if (config.verticalRotation && clippingType === 'vertical') {
+          const geometry = f.getGeometry()!;
+          geometry.rotate(
+            CesiumMath.toRadians(config.verticalRotation),
+            getCenter(geometry.getExtent()),
+          );
+        }
       }
       f[clippingObjectSymbol] = createClippingObject(f);
       featureListeners.set(f, addFeatureListeners(f));

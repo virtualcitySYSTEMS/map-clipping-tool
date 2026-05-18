@@ -8,6 +8,7 @@
     "prepublishOnly": "vcmplugin build",
     "build": "vcmplugin build",
     "bundle": "vcmplugin bundle",
+    "audit": "npm audit --omit=peer --omit=dev --omit=optional",
     "start": "vcmplugin serve",
     "preview": "vcmplugin preview",
     "buildStagingApp": "vcmplugin buildStagingApp",
